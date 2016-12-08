@@ -2,6 +2,7 @@
 #include <X11/X.h>
 #include <iostream>
 #include <functional>
+#include <sstream>
 #include "CImg.h"
 
 #include <stdio.h>
@@ -87,12 +88,6 @@ void foreach_screen_pixel(std::function<void (unsigned long&)> func) {
     func(pixel);
   }
 }
-/*
-init_screen_buffer();
-for(int i = 0; i < 30; i++)
-foreach_screen_pixel([&](unsigned long pixel) {
-
-});*/
 
 void error(std::string msg) {
   std::cout << msg << std::endl;
@@ -134,6 +129,7 @@ void sigint_handler(int sig) {
 
 int main() {
   signal(SIGINT, sigint_handler);
+  init_screen_buffer();
   struct sockaddr_in local_addr, remote_addr;
   socklen_t addr_len;
   int n;
@@ -163,11 +159,15 @@ int main() {
       std::cout << "received message: " << msg << std::endl;
       if(msg.size() < 2) msg = "close";
       if(!write_msg(remote_sock, "generic response")) msg = "close";
-      if(msg == "next") {
+      if(msg == "diff") { // send a diff
 
-      } else if(msg == "initial") {
+      } else if(msg == "key") { // send a keyframe
 
-      } else if(msg == "close") {
+      } else if(msg == "size") { // send the screen dimensions
+        std::ostringstream os;
+        os << screen_size.width << "x" << screen_size.height;
+        write_msg(remote_sock, os.str());
+      } else if(msg == "close") { // close the connection
         std::cout << "the connection was closed" << std::endl;
         communicating = false;
         shutdown(remote_sock, SHUT_RDWR);
