@@ -1,3 +1,7 @@
+// BetterCast Client
+// Copyright 2016 Sam Kelly
+// run on the device you want to cast / PC
+
 #include "bettercast.h"
 
 void close_sockets() {
