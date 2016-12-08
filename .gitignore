@@ -3,3 +3,5 @@
 CImg.h
 *.out
 *.png
+client
+server
