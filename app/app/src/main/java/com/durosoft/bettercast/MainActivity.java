@@ -81,8 +81,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     final int MAX_SCREEN_SIZE = 1920 * 1080;
     int screen_buffer[] = new int[MAX_SCREEN_SIZE];
     byte byte_buffer[] = new byte[MAX_SCREEN_SIZE * 3];
-    int screen_w = 1920;
-    int screen_h = 1080;
+    int screen_w = -1;
+    int screen_h = -1;
     Paint paint = new Paint();
     //Bitmap bmp = Bitmap.createBitmap(1080, 1920, Bitmap.Config.ARGB_8888);
 
@@ -180,15 +180,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                     out = new PrintWriter(socket.getOutputStream(), true);
                 if (in == null)
                     in = new DataInputStream(socket.getInputStream());
-                out.write("size\r\n");
-                out.flush();
-                String size_data = in.readLine();
-                screen_w = Integer.parseInt(size_data.split("x")[0]);
-                screen_h = Integer.parseInt(size_data.split("x")[1]);
-                System.out.println("size: " + screen_w + "x" + screen_h);
+                if(screen_w == -1 || screen_h == -1) {
+                    out.write("size\r\n");
+                    out.flush();
+                    String size_data = in.readLine();
+                    screen_w = Integer.parseInt(size_data.split("x")[0]);
+                    screen_h = Integer.parseInt(size_data.split("x")[1]);
+                    System.out.println("size: " + screen_w + "x" + screen_h);
+                }
                 out.write("key\r\n");
                 out.flush();
-                System.out.println("reading keyframe");
                 in.readFully(byte_buffer, 0, byte_buffer.length);
                 for(int i = 0; i < byte_buffer.length; i+=3) {
                     screen_buffer[i / 3] = (255 << 32) +
@@ -196,7 +197,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                                        (byte_buffer[i + 1] << 8) +
                                        (byte_buffer[i + 2]);
                 }
-                System.out.println("read keyframe");
                 in.readLine();
             } catch (Exception e) {
                 System.out.println("connection error");
@@ -207,10 +207,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         }
 
         protected void onPostExecute(Boolean arg) {
-            System.out.println("post execute!");
             the_activity.tryDrawing(the_holder);
             SeekDataTask task = new SeekDataTask();
-            try { Thread.currentThread().sleep(5); } catch (Exception e) {}
             task.execute();
         }
     }

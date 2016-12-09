@@ -102,6 +102,7 @@ void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, un
     func(r, g, b, i);
     i++;
   }
+  XDestroyImage(image);
 }
 
 void error(std::string msg) {
