@@ -38,9 +38,10 @@ int main() {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
   SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
+  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
   SDL_RenderClear(renderer);
   bool col = true;
-  for(int i = 0; i < 100; i++) {
+  for(int i = 0; i < 5; i++) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     if(col) {
       SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
