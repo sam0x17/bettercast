@@ -99,6 +99,12 @@ void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, un
     unsigned char b = pixel & blue_mask;
     unsigned char g = (pixel & green_mask) >> 8;
     unsigned char r = (pixel & red_mask) >> 16;
+    if(b == 0) b = 1;
+    if(g == 0) g = 1;
+    if(r == 0) r = 1;
+    if(b == 255) b = 254;
+    if(g == 255) g = 254;
+    if(r == 255) r = 254;
     func(r, g, b, i);
     i++;
   }

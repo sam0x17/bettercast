@@ -171,7 +171,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                     return false;
                 }
             } else {
-                System.out.println("already connected");
+                //System.out.println("already connected");
             }
 
             System.out.println("connected");
@@ -214,8 +214,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     }
 
     private void drawMyStuff(final Canvas canvas) {
-        System.out.println("drawing");
-        canvas.drawRGB(0, 0, 0);
+        //System.out.println("drawing");
         canvas.drawBitmap(screen_buffer, 0, screen_w, 0, 0, screen_w, screen_h, false, paint);
     }
 }
