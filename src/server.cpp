@@ -3,7 +3,11 @@
 // run on BetterCast device / ODROID XU4
 
 #include <SDL2/SDL.h>
-#include "bettercast.h"
+#include <iostream>
+//#include "bettercast.h"
+
+const int WIDTH = 1920;
+const int HEIGHT = 1080;
 
 SDL_Window *window;
 SDL_Renderer *renderer;
@@ -20,8 +24,7 @@ void init_sdl() {
     std::cout << "could not initialize SDL: " << SDL_GetError() << std::endl;
     exit(1);
   }
-  SDL_CreateWindowAndRenderer(screen_size.width, screen_size.height,
-                              SDL_WINDOW_FULLSCREEN_DESKTOP, &window, &renderer);
+  SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, SDL_WINDOW_FULLSCREEN_DESKTOP, &window, &renderer);
   if(window == NULL) {
     std::cout << "could not create window: " << SDL_GetError() << std::endl;
     exit(1);
@@ -32,7 +35,6 @@ void init_sdl() {
 }
 
 int main() {
-  screen_size = get_screen_size();
   init_sdl();
   SDL_UpdateWindowSurface(window);
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
@@ -50,8 +52,8 @@ int main() {
       SDL_SetRenderDrawColor(renderer, 230, 0, 0, 255);
       col = true;
     }
-    for(int y = 0; y < screen_size.height; y++) {
-      for(int x = 0; x < screen_size.height; x++) {
+    for(int y = 0; y < HEIGHT; y++) {
+      for(int x = 0; x < HEIGHT; x++) {
         SDL_RenderDrawPoint(renderer, x, y);
       }
     };
