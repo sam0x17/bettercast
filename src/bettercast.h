@@ -28,13 +28,12 @@ public:
 };
 
 typedef struct {
-  unsigned char a;
   unsigned char r;
   unsigned char g;
   unsigned char b;
-} ARGB8888;
+} RGB888;
 
-ARGB8888 screen_buffer[MAX_SCREEN_SIZE];
+RGB888 screen_buffer[MAX_SCREEN_SIZE];
 Size screen_size;
 char msg_buffer[MSG_BUFFER_SIZE];
 bool closing = false;
@@ -79,8 +78,7 @@ void init_screen_buffer() {
     std::cout << " is greater than the maximum supported display resolution. Terminating." << std::endl;
     exit(1);
   }
-  ARGB8888 empty;
-  empty.a = 255;
+  RGB888 empty;
   empty.r = 0;
   empty.g = 0;
   empty.b = 0;
@@ -95,8 +93,8 @@ void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, un
   green_mask = image->green_mask;
   blue_mask = image->blue_mask;
   int i = 0;
-  for(int x = 0; x < screen_size.width; x++)
-  for(int y = 0; y < screen_size.height ; y++) {
+  for(int y = 0; y < screen_size.height; y++)
+  for(int x = 0; x < screen_size.width; x++) {
     unsigned long pixel = XGetPixel(image, x, y);
     unsigned char b = pixel & blue_mask;
     unsigned char g = (pixel & green_mask) >> 8;
