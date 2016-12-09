@@ -38,10 +38,14 @@ int main() {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
   SDL_RenderClear(renderer);
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-  for(int i = 0; i < screen_size.width; ++i)
-      SDL_RenderDrawPoint(renderer, i, i);
-  SDL_RenderPresent(renderer);
-  SDL_Delay(5000);
+  for(int j = 0; j < screen_size.width; j++) {
+    for(int i = 0; i < screen_size.width; i++) {
+      SDL_RenderDrawPoint(renderer, i + j, i);
+    }
+    SDL_RenderPresent(renderer);
+  }
+
+  SDL_Delay(1000);
   close();
 }
 
