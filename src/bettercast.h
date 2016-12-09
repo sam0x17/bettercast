@@ -27,7 +27,14 @@ public:
   int height;
 };
 
-long screen_buffer[MAX_SCREEN_SIZE];
+typedef struct {
+  unsigned char a;
+  unsigned char r;
+  unsigned char g;
+  unsigned char b;
+} ARGB8888;
+
+ARGB8888 screen_buffer[MAX_SCREEN_SIZE];
 Size screen_size;
 char msg_buffer[MSG_BUFFER_SIZE];
 bool closing = false;
@@ -36,6 +43,9 @@ int screen_buffer_size;
 Display *display = XOpenDisplay(NULL);
 Window root = DefaultRootWindow(display);
 XWindowAttributes gwa;
+unsigned long red_mask;
+unsigned long green_mask;
+unsigned long blue_mask;
 
 std::string prune_chars(std::string str, std::string blacklist) {
   std::string result = "";
@@ -69,24 +79,29 @@ void init_screen_buffer() {
     std::cout << " is greater than the maximum supported display resolution. Terminating." << std::endl;
     exit(1);
   }
+  ARGB8888 empty;
+  empty.a = 255;
+  empty.r = 0;
+  empty.g = 0;
+  empty.b = 0;
   for(int i = 0; i < MAX_SCREEN_SIZE; i++)
-    screen_buffer[i] = 0;
+    screen_buffer[i] = empty;
   std::cout << "screen buffer initialized." << std::endl;
 }
 
-void foreach_screen_pixel(std::function<void (unsigned long&, int&)> func) {
+void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, unsigned char&, int&)> func) {
   XImage *image = XGetImage(display, root, 0, 0, screen_size.width, screen_size.height, AllPlanes, ZPixmap);
-  //unsigned long red_mask = image->red_mask;
-  //unsigned long green_mask = image->green_mask;
-  //unsigned long blue_mask = image->blue_mask;
+  red_mask = image->red_mask;
+  green_mask = image->green_mask;
+  blue_mask = image->blue_mask;
   int i = 0;
   for(int x = 0; x < screen_size.width; x++)
   for(int y = 0; y < screen_size.height ; y++) {
     unsigned long pixel = XGetPixel(image, x, y);
-    /*unsigned char b = pixel & blue_mask;
+    unsigned char b = pixel & blue_mask;
     unsigned char g = (pixel & green_mask) >> 8;
-    unsigned char r = (pixel & red_mask) >> 16;*/
-    func(pixel, i);
+    unsigned char r = (pixel & red_mask) >> 16;
+    func(r, g, b, i);
     i++;
   }
 }

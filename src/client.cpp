@@ -56,10 +56,13 @@ int main() {
         //TODO: implement
       } else if(msg == "key") { // send a keyframe
         std::cout << "sending keyframe" << std::endl;
-        foreach_screen_pixel([&](unsigned long pixel, int i) {
-          screen_buffer[i] = pixel;
+        foreach_screen_pixel([&](unsigned char r, unsigned char g, unsigned char b, int i) {
+          //screen_buffer[i].a = 255;
+          screen_buffer[i].r = r;
+          screen_buffer[i].g = g;
+          screen_buffer[i].b = b;
         });
-        if(!write(remote_sock, screen_buffer, screen_buffer_size)) communicating = false;
+        if(!write(remote_sock, (void *)screen_buffer, screen_buffer_size * sizeof(unsigned int))) communicating = false;
         if(!write_msg(remote_sock, "ok")) communicating = false;
       } else if(msg == "size") { // send the screen dimensions
         std::ostringstream os;
