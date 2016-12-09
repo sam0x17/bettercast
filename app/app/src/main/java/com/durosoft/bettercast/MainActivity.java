@@ -198,7 +198,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                 }
                 System.out.println("read keyframe");
                 in.readLine();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 System.out.println("connection error");
                 cleanup_connection();
                 return false;
@@ -210,8 +210,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             System.out.println("post execute!");
             the_activity.tryDrawing(the_holder);
             SeekDataTask task = new SeekDataTask();
-            //try { Thread.currentThread().sleep(50); } catch (Exception e) {}
-            //task.execute();
+            try { Thread.currentThread().sleep(5); } catch (Exception e) {}
+            task.execute();
         }
     }
 
