@@ -1,10 +1,11 @@
-#include <X11/Xlib.h>
-#include <X11/X.h>
 #include <iostream>
 #include <functional>
 #include <sstream>
-#include "CImg.h"
+#include <unordered_set>
 
+#include "CImg.h"
+#include <X11/Xlib.h>
+#include <X11/X.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,13 +14,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <math.h>
 
 using namespace cimg_library;
 
-const int MAX_SCREEN_SIZE = 64000000; // larger than largest possible consumer screen resolution
+const int MAX_SCREEN_SIZE = 1920 * 1080;
 const int PORT_NUM = 13314;
 const int BACKLOG_SIZE = 10;
 const int MSG_BUFFER_SIZE = 256;
+const int PATCH_SIZE = 96; // 96 x 96
+const int NUM_PATCHES = MAX_SCREEN_SIZE / (PATCH_SIZE * PATCH_SIZE);
 
 class Size {
 public:
@@ -32,6 +36,8 @@ typedef struct {
   unsigned char g;
   unsigned char b;
 } RGB888;
+
+std::unordered_set<int> active_patches;
 
 RGB888 screen_buffer[MAX_SCREEN_SIZE];
 Size screen_size;
@@ -109,6 +115,37 @@ void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, un
     i++;
   }
   XDestroyImage(image);
+}
+
+bool screen_diffpatch() {
+  active_patches.clear();
+  int patch_x = 0;
+  int patch_y = 0;
+  int patch_xx = 0;
+  int patch_yy = 0;
+  foreach_screen_pixel([&](unsigned char r, unsigned char g, unsigned char b, int i) {
+    //TODO: simpler formula
+    //int y = i / screen_size.width;
+    //int x = i - (y * screen_size.width);
+    if(patch_xx >= PATCH_SIZE) {
+      patch_xx = 0;
+      patch_x++;
+      if(patch_x >= screen_size.width / PATCH_SIZE)
+        patch_x = 0;
+    }
+    if(patch_yy >= PATCH_SIZE) {
+      patch_yy = 0;
+      patch_y++;
+    }
+    int patch_num = patch_y * (screen_size.width / PATCH_SIZE) + patch_x;
+    RGB888 *old_pixel = &screen_buffer[i];
+    if(old_pixel->r != r || old_pixel->g != g || old_pixel->b != b)
+      active_patches.insert(patch_num);
+    screen_buffer[i].r = r;
+    screen_buffer[i].g = g;
+    screen_buffer[i].b = b;
+  });
+  return active_patches.size() < NUM_PATCHES * 0.80;
 }
 
 void error(std::string msg) {
