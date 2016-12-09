@@ -36,15 +36,26 @@ int main() {
   init_sdl();
   SDL_UpdateWindowSurface(window);
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+  SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
   SDL_RenderClear(renderer);
-  SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-  for(int j = 0; j < screen_size.width; j++) {
-    for(int i = 0; i < screen_size.width; i++) {
-      SDL_RenderDrawPoint(renderer, i + j, i);
+  bool col = true;
+  for(int i = 0; i < 100; i++) {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    if(col) {
+      SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+      col = false;
+    } else {
+      SDL_SetRenderDrawColor(renderer, 230, 0, 0, 255);
+      col = true;
     }
+    for(int y = 0; y < screen_size.height; y++) {
+      for(int x = 0; x < screen_size.height; x++) {
+        SDL_RenderDrawPoint(renderer, x, y);
+      }
+    };
     SDL_RenderPresent(renderer);
   }
-
   SDL_Delay(1000);
   close();
 }
