@@ -24,9 +24,9 @@ const int NUM_PIXELS = SCREEN_W * SCREEN_H;
 const int PORT_NUM = 13314;
 const int BACKLOG_SIZE = 10;
 const int MSG_BUFFER_SIZE = 256;
-const int PATCH_SIZE = 12;
+const int PATCH_SIZE = 120;
 const int NUM_PATCHES = NUM_PIXELS / (PATCH_SIZE * PATCH_SIZE);
-const float PATCH_FACTOR = 0.10; // percent of patches that need to change for us
+const float PATCH_FACTOR = 0.60; // percent of patches that need to change for us
                                  // to not perform a diffpatch
 
 typedef struct {
@@ -131,9 +131,9 @@ void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, un
 
 RGB888 current_patch[PATCH_SIZE * PATCH_SIZE];
 
-void load_patch(Position patch) {
-  int start_x = patch.x * PATCH_SIZE;
-  int start_y = patch.y * PATCH_SIZE;
+void load_patch(int x, int y) {
+  int start_x = x * PATCH_SIZE;
+  int start_y = y * PATCH_SIZE;
   int i = 0;
   for(int y = 0; y < PATCH_SIZE; y++) {
     for(int x = 0; x < PATCH_SIZE; x++) {
@@ -189,6 +189,7 @@ std::string read_msg(int socket) {
   std::string result = "";
   bzero(msg_buffer, MSG_BUFFER_SIZE);
   int n = read(socket, msg_buffer, MSG_BUFFER_SIZE);
+  n++;
   result += std::string(msg_buffer);
   result = prune_chars(result, "\r\n");
   return result;

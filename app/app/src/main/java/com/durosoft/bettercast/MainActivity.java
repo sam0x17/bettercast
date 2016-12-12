@@ -1,13 +1,11 @@
 package com.durosoft.bettercast;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -17,13 +15,10 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback {
     public static SurfaceView the_view = null;
@@ -80,13 +75,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     }
 
     final int MAX_SCREEN_SIZE = 1920 * 1080;
-    final int PATCH_SIZE = 12;
+    final int PATCH_SIZE = 120;
     int screen_buffer[] = new int[MAX_SCREEN_SIZE];
     byte byte_buffer[] = new byte[MAX_SCREEN_SIZE * 3];
     int screen_w = 0;
     int screen_h = 0;
     int patch_pos_x = -1;
     int patch_pos_y = -1;
+    int patch_start_x = -1;
+    int patch_start_y = -1;
     String sp[];
 
     Paint paint = new Paint();
@@ -203,6 +200,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                 String resp = in.readLine();
                 if(resp.equals("no change")) {
                     System.out.println("no change");
+                    return false;
                 } else if(resp.equals("full refresh")) {
                     System.out.println("full refresh");
                     in.readFully(byte_buffer, 0, byte_buffer.length);
@@ -221,13 +219,40 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                         sp = resp.split(","); // try to mitigate dynamic memory allocation
                         patch_pos_x = Integer.parseInt(sp[0]);
                         patch_pos_y = Integer.parseInt(sp[1]);
-                        System.out.println("patch pos x: " + patch_pos_x);
-                        System.out.println("patch pos y: " + patch_pos_y);
                         in.readFully(byte_buffer, 0, PATCH_SIZE * PATCH_SIZE * 3);
+                        patch_start_x = patch_pos_x * PATCH_SIZE;
+                        patch_start_y = patch_pos_y * PATCH_SIZE;
+                        int x = patch_start_x;
+                        int y = patch_start_y;
+                        int ii;
+                        for(int i = 0; i < PATCH_SIZE * PATCH_SIZE * 3; i+=3) {
+                            ii = y * screen_w + x;
+                            screen_buffer[ii] = (255 << 32) +
+                                    (byte_buffer[i] << 16) +
+                                    (byte_buffer[i + 1] << 8) +
+                                    (byte_buffer[i + 2]);
+                            x++;
+                            if(x >= patch_start_x + PATCH_SIZE) {
+                                x -= PATCH_SIZE;
+                                y++;
+                            }
+                        }
+                        /*
+                        int ii = 0;
+                        int i;
+                        for(int y = 0; y < PATCH_SIZE; y++) {
+                            for(int x = 0; x < PATCH_SIZE; x++) {
+                                i = (patch_start_y + y) * screen_w + patch_start_x + x;
+                                screen_buffer[i] = (255 << 32) +
+                                        (byte_buffer[ii] << 16) +
+                                        (byte_buffer[ii + 1] << 8) +
+                                        (byte_buffer[ii + 2]);
+                                ii++;
+                            }
+                        }*/
                     }
                 }
             } catch (Exception e) {
-                if(e != null) System.out.println(e.getMessage());
                 System.out.println("connection error");
                 cleanup_connection();
                 return false;
@@ -236,7 +261,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         }
 
         protected void onPostExecute(Boolean arg) {
-            the_activity.tryDrawing(the_holder);
+            if(arg) the_activity.tryDrawing(the_holder);
             SeekDataTask task = new SeekDataTask();
             task.execute();
         }

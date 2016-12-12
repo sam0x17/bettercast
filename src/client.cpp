@@ -62,11 +62,12 @@ int main() {
                       num_pixels_transferred << " : " << num_active_pixels << " pixels"<< std::endl;
             if(!write_msg(remote_sock, "diff incoming")) communicating = false;
             for(int i = 0; i < num_active_patches; i++) {
-              Position patch = active_patches_list[i];
+              int x = active_patches_list[i].x;
+              int y = active_patches_list[i].y;
               std::ostringstream os;
-              os << patch.x << "," << patch.y;
+              os << x << "," << y;
               if(!write_msg(remote_sock, os.str())) communicating = false;
-              load_patch(active_patches_list[i]);
+              load_patch(x, y);
               if(!write(remote_sock, (void *)current_patch, sizeof(RGB888) * PATCH_SIZE * PATCH_SIZE))
                 communicating = false;
             }
