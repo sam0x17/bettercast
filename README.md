@@ -30,6 +30,9 @@ Because the BetterCast already runs Android, streaming things like Netflix, etc.
 does not need to be handled directly by the BetterCast software, since you can
 already do this directly with Android apps.
 
+Note that currently only Linux is supported by the broadcaster / BetterCast client.
+Support for other operating systems can be added easily.
+
 ## Hardware
 
 The BetterCast is being designed with the excellent ODROID XU4 in mind as the
@@ -90,10 +93,18 @@ has a feed available by responding to incoming connections on the BetterCast por
 Once a BetterCast is connected, the client will respond to its requsts for screen
 data in a timely fashion.
 
+## Source Code
+
+The source code is divided into three parts. The "src" directory contains the source
+code for the BetterCast client application (the broadcaster). The client application
+can be built and run by running ./build.sh and then ./client. Any required libraries
+will be installed automatically. The Android app is contained within the "app" directory.
+
 ### Future Work
-1. Use OpenGL ES on Android for ~30-60 FPS instead of ~20-30 FPS. (currently drawing
+1. Use OpenGL ES on Android for ~50-80 FPS instead of ~20-30 FPS. (currently drawing
    to the screen is slower than transferring pixel data over the network!)
 2. Active scanning for broadcasters
 3. Ability to customize screen resolution, hostname, etc. (not important for demo purposes)
 4. Custom algorithm to optimize the performance of scrolling
 5. True full-screen mode
+6. Support more operating systems!
