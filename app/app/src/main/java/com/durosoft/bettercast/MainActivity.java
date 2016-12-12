@@ -80,10 +80,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     }
 
     final int MAX_SCREEN_SIZE = 1920 * 1080;
+    final int PATCH_SIZE = 12;
     int screen_buffer[] = new int[MAX_SCREEN_SIZE];
     byte byte_buffer[] = new byte[MAX_SCREEN_SIZE * 3];
-    int screen_w = -1;
-    int screen_h = -1;
+    int screen_w = 0;
+    int screen_h = 0;
+    int patch_pos_x = -1;
+    int patch_pos_y = -1;
+    String sp[];
+
     Paint paint = new Paint();
     //Bitmap bmp = Bitmap.createBitmap(1080, 1920, Bitmap.Config.ARGB_8888);
 
@@ -110,6 +115,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             } catch (IOException ee) {
             }
         try {
+            if(socket != null)
             socket.close();
         } catch (IOException ee) {
         }
@@ -165,8 +171,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             if (socket == null) {
                 System.out.println("trying to connect...");
                 try {
-                    socket = new Socket("sam-Thinkpad-T440s", 13314);
+                    socket = new Socket("sam-ThinkPad-T440s", 13314);
                 } catch (IOException e) {
+                    System.out.println(e.getMessage());
                     System.out.println("error connecting");
                     cleanup_connection();
                     short_pause();
@@ -182,25 +189,45 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                     out = new PrintWriter(socket.getOutputStream(), true);
                 if (in == null)
                     in = new DataInputStream(socket.getInputStream());
-                if(screen_w == -1 || screen_h == -1) {
+                if(screen_w == 0 || screen_h == 0) {
                     out.write("size\r\n");
                     out.flush();
                     String size_data = in.readLine();
-                    screen_w = Integer.parseInt(size_data.split("x")[0]);
-                    screen_h = Integer.parseInt(size_data.split("x")[1]);
+                    sp = size_data.split("x");
+                    screen_w = Integer.parseInt(sp[0]);
+                    screen_h = Integer.parseInt(sp[1]);
                     System.out.println("size: " + screen_w + "x" + screen_h);
                 }
-                out.write("key\r\n");
+                out.write("diff\r\n");
                 out.flush();
-                in.readFully(byte_buffer, 0, byte_buffer.length);
-                for(int i = 0; i < byte_buffer.length; i+=3) {
-                    screen_buffer[i / 3] = (255 << 32) +
-                                       (byte_buffer[i] << 16) +
-                                       (byte_buffer[i + 1] << 8) +
-                                       (byte_buffer[i + 2]);
+                String resp = in.readLine();
+                if(resp.equals("no change")) {
+                    System.out.println("no change");
+                } else if(resp.equals("full refresh")) {
+                    System.out.println("full refresh");
+                    in.readFully(byte_buffer, 0, byte_buffer.length);
+                    for(int i = 0; i < byte_buffer.length; i+=3) {
+                        screen_buffer[i / 3] = (255 << 32) +
+                                (byte_buffer[i] << 16) +
+                                (byte_buffer[i + 1] << 8) +
+                                (byte_buffer[i + 2]);
+                    }
+                    in.readLine(); // should read "ok"
+                } else if(resp.equals("diff incoming")) {
+                    System.out.println("partial diff");
+                    while(true) {
+                        resp = in.readLine();
+                        if(resp.equals("ok")) break;
+                        sp = resp.split(","); // try to mitigate dynamic memory allocation
+                        patch_pos_x = Integer.parseInt(sp[0]);
+                        patch_pos_y = Integer.parseInt(sp[1]);
+                        System.out.println("patch pos x: " + patch_pos_x);
+                        System.out.println("patch pos y: " + patch_pos_y);
+                        in.readFully(byte_buffer, 0, PATCH_SIZE * PATCH_SIZE * 3);
+                    }
                 }
-                in.readLine();
             } catch (Exception e) {
+                if(e != null) System.out.println(e.getMessage());
                 System.out.println("connection error");
                 cleanup_connection();
                 return false;

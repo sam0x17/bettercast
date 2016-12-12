@@ -53,10 +53,34 @@ int main() {
       std::cout << " << " << msg << std::endl;
       if(msg.size() < 2) msg = "close";
       if(msg == "diff") { // send a diff
-        //TODO: implement
+        if(screen_diffpatch()) {
+          if(num_active_pixels == 0) {
+            if(!write_msg(remote_sock, "no change")) communicating = false;
+          } else {
+            int num_pixels_transferred = num_active_patches * PATCH_SIZE * PATCH_SIZE;
+            std::cout << "diff patch performed: " << num_active_patches << " patches, " <<
+                      num_pixels_transferred << " : " << num_active_pixels << " pixels"<< std::endl;
+            if(!write_msg(remote_sock, "diff incoming")) communicating = false;
+            for(int i = 0; i < num_active_patches; i++) {
+              Position patch = active_patches_list[i];
+              std::ostringstream os;
+              os << patch.x << "," << patch.y;
+              if(!write_msg(remote_sock, os.str())) communicating = false;
+              load_patch(active_patches_list[i]);
+              if(!write(remote_sock, (void *)current_patch, sizeof(RGB888) * PATCH_SIZE * PATCH_SIZE))
+                communicating = false;
+            }
+            if(!write_msg(remote_sock, "ok")) communicating = false;
+          }
+        } else {
+          std::cout << "full refresh performed" << std::endl;
+          if(!write_msg(remote_sock, "full refresh")) communicating = false;
+          if(!write(remote_sock, (void *)screen_buffer, screen_buffer_size * 3)) communicating = false;
+          if(!write_msg(remote_sock, "ok")) communicating = false;
+        }
       } else if(msg == "key") { // send a keyframe
         std::cout << "sending keyframe" << std::endl;
-        foreach_screen_pixel([&](unsigned char r, unsigned char g, unsigned char b, int i) {
+        foreach_screen_pixel([&](unsigned char r, unsigned char g, unsigned char b, int i, int x, int y) {
           screen_buffer[i].r = r;
           screen_buffer[i].g = g;
           screen_buffer[i].b = b;

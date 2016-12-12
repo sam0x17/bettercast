@@ -18,18 +18,16 @@
 
 using namespace cimg_library;
 
-const int MAX_SCREEN_SIZE = 1920 * 1080;
+const int SCREEN_W = 1920;
+const int SCREEN_H = 1080;
+const int NUM_PIXELS = SCREEN_W * SCREEN_H;
 const int PORT_NUM = 13314;
 const int BACKLOG_SIZE = 10;
 const int MSG_BUFFER_SIZE = 256;
-const int PATCH_SIZE = 96; // 96 x 96
-const int NUM_PATCHES = MAX_SCREEN_SIZE / (PATCH_SIZE * PATCH_SIZE);
-
-class Size {
-public:
-  int width;
-  int height;
-};
+const int PATCH_SIZE = 12;
+const int NUM_PATCHES = NUM_PIXELS / (PATCH_SIZE * PATCH_SIZE);
+const float PATCH_FACTOR = 0.10; // percent of patches that need to change for us
+                                 // to not perform a diffpatch
 
 typedef struct {
   unsigned char r;
@@ -37,10 +35,25 @@ typedef struct {
   unsigned char b;
 } RGB888;
 
-std::unordered_set<int> active_patches;
+class Size {
+public:
+  int width;
+  int height;
+};
 
-RGB888 screen_buffer[MAX_SCREEN_SIZE];
+class Position {
+public:
+  int x;
+  int y;
+};
+
+bool debug_mode = false;
+int num_active_patches = 0;
+int num_active_pixels = 0;
+bool active_patches[SCREEN_W / PATCH_SIZE][SCREEN_H / PATCH_SIZE];
+Position active_patches_list[NUM_PATCHES];
 Size screen_size;
+RGB888 screen_buffer[NUM_PIXELS];
 char msg_buffer[MSG_BUFFER_SIZE];
 bool closing = false;
 int local_sock, remote_sock;
@@ -79,21 +92,20 @@ void init_screen_buffer() {
   std::cout << "initializing screen buffer..." << std::endl;
   screen_size = get_screen_size();
   screen_buffer_size = screen_size.width * screen_size.height;
-  if(screen_buffer_size > MAX_SCREEN_SIZE) {
-    std::cout << "fatal error: display resolution of " << screen_size.width << "x" << screen_size.height;
-    std::cout << " is greater than the maximum supported display resolution. Terminating." << std::endl;
+  if(screen_buffer_size > NUM_PIXELS) {
+    std::cout << "error: this version of better cast was not compiled to support " << screen_size.width << "x" << screen_size.height;
     exit(1);
   }
   RGB888 empty;
   empty.r = 0;
   empty.g = 0;
   empty.b = 0;
-  for(int i = 0; i < MAX_SCREEN_SIZE; i++)
+  for(int i = 0; i < NUM_PIXELS; i++)
     screen_buffer[i] = empty;
   std::cout << "screen buffer initialized." << std::endl;
 }
 
-void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, unsigned char&, int&)> func) {
+void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, unsigned char&, int&, int&, int&)> func) {
   XImage *image = XGetImage(display, root, 0, 0, screen_size.width, screen_size.height, AllPlanes, ZPixmap);
   red_mask = image->red_mask;
   green_mask = image->green_mask;
@@ -111,41 +123,61 @@ void foreach_screen_pixel(std::function<void (unsigned char&, unsigned char&, un
     if(b == 255) b = 254;
     if(g == 255) g = 254;
     if(r == 255) r = 254;
-    func(r, g, b, i);
+    func(r, g, b, i, x, y);
     i++;
   }
   XDestroyImage(image);
 }
 
+RGB888 current_patch[PATCH_SIZE * PATCH_SIZE];
+
+void load_patch(Position patch) {
+  int start_x = patch.x * PATCH_SIZE;
+  int start_y = patch.y * PATCH_SIZE;
+  int i = 0;
+  for(int y = 0; y < PATCH_SIZE; y++) {
+    for(int x = 0; x < PATCH_SIZE; x++) {
+      current_patch[i] = screen_buffer[(start_y + y) * screen_size.width + start_x + x];
+      i++;
+    }
+  }
+}
+
+// "diffpatch" algorithm
 bool screen_diffpatch() {
-  active_patches.clear();
-  int patch_x = 0;
-  int patch_y = 0;
-  int patch_xx = 0;
-  int patch_yy = 0;
-  foreach_screen_pixel([&](unsigned char r, unsigned char g, unsigned char b, int i) {
-    //TODO: simpler formula
-    //int y = i / screen_size.width;
-    //int x = i - (y * screen_size.width);
-    if(patch_xx >= PATCH_SIZE) {
-      patch_xx = 0;
-      patch_x++;
-      if(patch_x >= screen_size.width / PATCH_SIZE)
-        patch_x = 0;
+  for(int y = 0; y < screen_size.height / PATCH_SIZE; y++)
+    for(int x = 0; x < screen_size.width / PATCH_SIZE; x++)
+      active_patches[x][y] = false;
+  bool full_refresh = false;
+  num_active_patches = 0;
+  num_active_pixels = 0;
+  foreach_screen_pixel([&](unsigned char r, unsigned char g, unsigned char b, int i, int x, int y) {
+    if(full_refresh) {
+      screen_buffer[i].r = r;
+      screen_buffer[i].g = g;
+      screen_buffer[i].b = b;
+      return;
     }
-    if(patch_yy >= PATCH_SIZE) {
-      patch_yy = 0;
-      patch_y++;
-    }
-    int patch_num = patch_y * (screen_size.width / PATCH_SIZE) + patch_x;
     RGB888 *old_pixel = &screen_buffer[i];
-    if(old_pixel->r != r || old_pixel->g != g || old_pixel->b != b)
-      active_patches.insert(patch_num);
-    screen_buffer[i].r = r;
-    screen_buffer[i].g = g;
-    screen_buffer[i].b = b;
+    if(old_pixel->r != r || old_pixel->g != g || old_pixel->b != b) {
+      screen_buffer[i].r = r;
+      screen_buffer[i].g = g;
+      screen_buffer[i].b = b;
+      num_active_pixels++;
+      Position patch;
+      patch.x = x / PATCH_SIZE;
+      patch.y = y / PATCH_SIZE;
+      if(!active_patches[patch.x][patch.y]) {
+        active_patches[patch.x][patch.y] = true;
+        active_patches_list[num_active_patches] = patch;
+        num_active_patches++;
+      }
+      if(num_active_pixels > NUM_PIXELS * PATCH_FACTOR ||
+         num_active_patches > NUM_PATCHES * PATCH_FACTOR)
+        full_refresh = true;
+    }
   });
-  return active_patches.size() < NUM_PATCHES * 0.80;
+  return !full_refresh;
 }
 
 void error(std::string msg) {
@@ -163,7 +195,7 @@ std::string read_msg(int socket) {
 }
 
 bool write_msg(int socket, std::string msg) {
-  std::cout << " >> " << msg << std::endl;
+  if(debug_mode) std::cout << " >> " << msg << std::endl;
   std::string final_msg = msg + "\n";
   int n = write(socket, final_msg.c_str(), final_msg.size());
   if(n < 0) return false;
