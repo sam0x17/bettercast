@@ -26,47 +26,58 @@ however partial screen changes take a small fraction of the time. When doing bas
 text editing and programming, the experience is virtually zero-latency (unless you
 are scrolling).
 
+Because the BetterCast already runs Android, streaming things like Netflix, etc.,
+does not need to be handled directly by the BetterCast software, since you can
+already do this directly with Android apps.
+
 ## Hardware
 
 The BetterCast is being designed with the excellent ODROID XU4 in mind as the
-desired target platform, though any ARM-based linux device with an OpenGL ES 3.0
+desired target platform, though any ARM-based Android device with an OpenGL ES 3.0
 profile and similar performance to the XU4 should work as well. The XU4 is
 particularly desirable for its octa-core 2 GHz processor, 2 GB of memory, and
 most importantly, a dedicated Mali-T628 GPU. This level of performance is very
 rare for such a small (and relatively affordable) device, and rivals that of the
 Google Chromecast by a fair margin. The XU4 also features an HDMI port and Gigabit
-ethernet. The XU4 is also capable of running Android. This could be extremely useful.
-If BetterCast were written for Android instead of for linux, it could target an even
-wider range of devices.
+ethernet.
 
 ![ODROID XU4](http://www.hardkernel.com/main/_Files/prdt/2016/201606/201606241810180839.jpg)
 
-The final deployment of the BetterCast will consist of an ODROID XU4 with a black
+The final deployment of the BetterCast consists of an ODROID XU4 with a black
 plastic enclosure, power cable, a very short HDMI cable, and USB 3.0 WiFi module.
-This will allow the BetterCast to be attached directly to the back of a TV or
-monitor, so users can stream video wirelessly to the TV/Monitor.
+This allows the BetterCast to be attached directly to the back of a TV or
+monitor.
 
 ## How to use
 
 1. Obtain an ODROID XU4, preferably with a WiFi module
-2. Use one of the provided ROMs to install Ubuntu 16.04 (LTS) (may change to Android, stay tuned)
+2. Use one of the provided ROMs to install the latest version of Android available for the ODROID.
 3. Get the XU4 to connect to the LAN
-4. Use our install script (coming soon) to install BetterCast on the XU4
-5. Install OBS (or similar) RTMP software on your personal computer
-6. Enter the local IP address of the XU4 as the broadcast target for OBS and start broadcasting!
+4. Install the BetterCast APK file (hostname can easily be changed from the code)
+5. Run the BetterCast client
+
+Note: it is assumed that you will broadcast at 1920x1080. If your computer runs at
+a different resolution, simply change the screen resolution constants in the APK
+and in bettercast.h and rebuild. If you use a different screen resolution, you will
+need to select a patch size that divides both the width and height of your screen
+dimensions.
 
 
 ## Protocol Support
 
-The BetterCast will implement the RTMP protocol for receiving video streams. This
-is the same protocol used by popular services such as Twitch.tv to receive incoming
-video data. By supporting RTMP, we are enabling users to use the broadcast
-software of their choice to send video to the BetterCast. For best results,
-we recommend using [OBS (Open Broadcaster Software)](https://obsproject.com/), which
-has binaries available for Linux, Windows, and even OSX. Supporting RTMP also has
-the advantage of allowing us to focus solely on the BetterCast itself, instead of
-worrying about writing client-side software capable of broadcasting for every
-operating system.
+Originally we had plans to implement the RTMP or the RTSP protocols on the BetterCast,
+but we found that these protocols work against exactly what we are trying to optimize:
+low latency, so we forged our own path and wrote our own simple network protocol for
+the BetterCast. The following table summarizes the various commands available within
+the protocol.
+
+Command Name | Response Format | Description
+--- | --- | ---
+size | ####x#### | returns the broadcaster's screen resolution "e.g. 1920x1080"
+key | (binary data) | returns the raw pixel data for the current frame
+diff | ##x##, (binary data).. | returns the raw pixels of each changed patch
+bettercast:probe | bettercast:ack | used to quickly scan the network for supported clients
+close | NA | instructs the client to cease broadcasting
 
 ## Data Model
 
