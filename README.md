@@ -1,3 +1,7 @@
+(for rendered markdown version please see https://github.com/samkelly/bettercast)
+
+Slides: https://docs.google.com/presentation/d/1B89vO3D8Jk_mUqOF2KIiysDOorjnd5YqRgKRbLirsHk/edit?usp=sharing
+
 # BetterCast
 
 The BetterCast project aims to create an open-source engine that enables high definition
