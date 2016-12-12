@@ -1,17 +1,30 @@
 # BetterCast
 
 The BetterCast project aims to create an open-source engine that enables high definition
-screen/video broadcasting from a desktop or laptop PC, over a local network, to
-a small linux-enabled device (such as an ODROID XU4). Inspired by the Google Chromecast,
-the BetterCast aims to fill the more basic need many people have to simply broadcast
-one's entire screen to a physically distant monitor or TV with little fuss and in
-a completely content-agnostic fashion. People may find this desirable for a number
-of reasons — Netflix, Vudu, Twitch, and other online video streaming services have
-notoriously bad or spotty app support across all devices, and many times it would
-be very useful/desirable to wirelessly broadcast a laptop or desktop screen onto a large
-TV without having to manage long HDMI cables. The Chromecast is capable of doing this
-in a very basic sense, however it chokes if you actually try to screen capture a
-"non-castable" video screen or live-stream a video game.
+low-latency screencasting from a desktop or laptop PC, over a local network, to
+a small android-enabled device (such as an ODROID XU4). Existing devices, such as the
+Google Chromecast are already optimized for streaming high definition video, with a
+3-4 second delay. If you simply want to broadcast the screen of your laptop while
+you work on some code, however, there are few if any workable options, since this
+requires a high definition feed and very low latency. The BetterCast seeks to fill
+this niche of broadcasting highly static content at a lower latency than the 3-4
+second delay offered by Chromecast and similar devices. The BetterCast accomplishes
+this goal using two primary optimizations:
+
+1. The BetterCast does not using any encoding or transcoding, as this is slow and
+   is the primary source of delay in modern streaming devices. Since we are streaming
+   over the LAN, we can afford to send uncompressed raw pixel data over the network,
+   and it turns out this is significantly faster (in terms of latency) than encoding,
+   transferring, and then decoding.
+2. The BetterCast uses a custom "diff patch" algorithm. The screen is broken up into
+   60x60 patches (this number works best on modern UIs), and once a keyframe has
+   been sent, only the patches that had changed pixels since the last transmission
+   are sent to the BetterCast.
+
+The result of these optimizations is that a full-screen rewrite takes about a second,
+however partial screen changes take a small fraction of the time. When doing basic
+text editing and programming, the experience is virtually zero-latency (unless you
+are scrolling).
 
 ## Hardware
 
