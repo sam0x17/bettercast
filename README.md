@@ -100,7 +100,7 @@ code for the BetterCast client application (the broadcaster). The client applica
 can be built and run by running ./build.sh and then ./client. Any required libraries
 will be installed automatically. The Android app is contained within the "app" directory.
 
-### Future Work
+## Future Work
 1. Use OpenGL ES on Android for ~50-80 FPS instead of ~20-30 FPS. (currently drawing
    to the screen is slower than transferring pixel data over the network!)
 2. Active scanning for broadcasters
