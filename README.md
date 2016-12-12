@@ -79,46 +79,21 @@ diff | ##x##, (binary data).. | returns the raw pixels of each changed patch
 bettercast:probe | bettercast:ack | used to quickly scan the network for supported clients
 close | NA | instructs the client to cease broadcasting
 
-## Data Model
-
-![BetterCast data model](/docs/bettercast_data_model1.png "data model")
-
-The data model used by the BetterCast is simple. Video data from the client desktop/laptop
-PC is recorded from the primary monitor and system sound output, encoded in OBS, and sent
-via the RTMP protocol over the LAN to the the BetterCast, which decodes and displays
-this stream on the TV/monitor via a direct HDMI connection.
 
 ## Tasks / Software Model
 
-Because of the generally linear flow of data through the system, it is relatively easy
-to identify key tasks and the overall software model that will implement these tasks.
-The overall model follows the linear data model defined above, with the exception of
-a limited set of control message the XU4 can send "backwards" to the client to change
-this such as audio/video bitrate and display resolution.
+There are two primary task. The "server" (BetterCast) app scans the network for a
+broadcaster on the BetterCast port (13314). Once connected, it will display the
+video feed from the broadcaster on the Android display. The "client" (laptop/PC)
+simply runs the BetterCast broadcasting software and advertises the fact that it
+has a feed available by responding to incoming connections on the BetterCast port.
+Once a BetterCast is connected, the client will respond to its requsts for screen
+data in a timely fashion.
 
-Task Name | Parameters | Description
---- | --- | ---
-RTMPListen | source_IP | listen for incoming connections on the RTMP port
-RTMPRead | data_block | read a chunk of video data from the RTMP stream
-RTMPDecode | stream, data_block | decode a chunk of video data from the RTMP stream
-RTMPDisplay | stream, decoded_data_block | display a chunk of video data on the HDMI device
-DisplayNoInput | none | visually notify the user that no input stream has been specified
-RTMPSetResolution | stream, target_IP | notify connected client to send a specific resolution
-RTMPSetBitRate | stream, target_IP | notify connected client to send a specific bitrate
-RTMPClose | none | client notifies XU4 that the stream has closed/ended
-
-## Recent Progress
-
-* ODROID XU4 Purchased
-* installed Ubuntu 16.04 LTS on XU4
-* tested video performance, performance in XBMC/Kodi is very good
-* tested OpenGL support -- works, but difficult to compile
-
-### Current Tasks:
-1. get full-screen OpenGL ES window working
-2. determine if full-screen rendering is going to be a bottleneck at 1920x1080 (1080p).
-3. find a reliable h264 decoding library that can be used in OpenGL ES
-4. assess whether it would be better to use Android on the XU4 and write an Android app
-
-![Odroid XU4 running Android](http://www.cnx-software.com/wp-content/uploads/2015/12/Android_6.0_ODROID_XU4.png)
-Odroid XU4 running the Android alternative ROM instead of Ubuntu
+### Future Work
+1. Use OpenGL ES on Android for ~30-60 FPS instead of ~20-30 FPS. (currently drawing
+   to the screen is slower than transferring pixel data over the network!)
+2. Active scanning for broadcasters
+3. Ability to customize screen resolution, hostname, etc. (not important for demo purposes)
+4. Custom algorithm to optimize the performance of scrolling
+5. True full-screen mode
