@@ -24,7 +24,7 @@ const int NUM_PIXELS = SCREEN_W * SCREEN_H;
 const int PORT_NUM = 13314;
 const int BACKLOG_SIZE = 10;
 const int MSG_BUFFER_SIZE = 256;
-const int PATCH_SIZE = 120;
+const int PATCH_SIZE = 60;
 const int NUM_PATCHES = NUM_PIXELS / (PATCH_SIZE * PATCH_SIZE);
 const float PATCH_FACTOR = 0.60; // percent of patches that need to change for us
                                  // to not perform a diffpatch

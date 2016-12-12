@@ -75,7 +75,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     }
 
     final int MAX_SCREEN_SIZE = 1920 * 1080;
-    final int PATCH_SIZE = 120;
+    final int PATCH_SIZE = 60;
     int screen_buffer[] = new int[MAX_SCREEN_SIZE];
     byte byte_buffer[] = new byte[MAX_SCREEN_SIZE * 3];
     int screen_w = 0;
